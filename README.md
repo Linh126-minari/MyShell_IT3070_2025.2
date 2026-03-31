@@ -38,8 +38,8 @@ myShell/
 ```
 ## Core Features Implementation
 
-- [] Parsing & CreateProcess: Phân tích lệnh & Tạo tiến trình
-- [] Process Management: Quản lý tiến trình chạy ngầm
-- [] Built-in Commands & Environment Management: Biến môi trường & Lệnh nội trú
-- [] Signal Handling: Xử lý tín hiệu
-- [] Batch Script Execution: Thực thi Batch File
+- [ ] Parsing & CreateProcess: Phân tích lệnh & Tạo tiến trình
+- [ ] Process Management: Quản lý tiến trình chạy ngầm
+- [ ] Built-in Commands & Environment Management: Biến môi trường & Lệnh nội trú
+- [ ] Signal Handling: Xử lý tín hiệu
+- [ ] Batch Script Execution: Thực thi Batch File
