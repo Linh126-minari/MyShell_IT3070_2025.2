@@ -19,6 +19,10 @@ namespace ProcessManager {
     void showDateTime(bool isDate);
     void list();
     void cleanup(); // Gọi khi thoát Shell
+    bool terminateForeground();
+    void showPath();
+    bool setPath(const std::string& value);
+    bool addPath(const std::string& value);
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <limits>
 #include "shell.h"
+#include "builtins.h"
 
 namespace {
     bool tryParsePid(const std::string& text, DWORD& pid) {
@@ -48,25 +49,12 @@ void processCommand(const std::string& input) {
 
     std::string cmd = args[0];
 
-    // ROUTING: Điều hướng lệnh
-    if (cmd == "help") {
-        ProcessManager::help();
-    }
-    else if (cmd == "date") {
-        ProcessManager::showDateTime(true);
-    }
-    else if (cmd == "time") {
-        ProcessManager::showDateTime(false);
-    }
-    else if (cmd == "dir") {
-        if (isBackground) {
-            ProcessManager::launch({ "cmd", "/c", "dir" }, true);
-        } else {
-            std::system("dir");
-        }
+    if (Builtins::handleBuiltin(args, isBackground)) {
+        return;
     }
 
-    else if (cmd == "list") {
+    // ROUTING: Điều hướng lệnh
+    if (cmd == "list") {
         ProcessManager::list();
     }
     else if (cmd == "kill" && args.size() > 1) {

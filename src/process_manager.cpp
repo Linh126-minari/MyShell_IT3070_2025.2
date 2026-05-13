@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <ctime>
 #include <cstring>
+#include <atomic>
 #include "process_manager.h"
 #include <tlhelp32.h>
 
@@ -125,6 +126,48 @@ namespace {
         if (proc != processHandle) CloseHandle(proc);
         return ok;
     }
+
+    std::atomic<HANDLE> fgHandle{ NULL };
+
+    void setForegroundProcess(HANDLE handle, DWORD pid) {
+        fgHandle.store(handle, std::memory_order_release);
+        (void)pid;
+    }
+
+    void clearForegroundProcess() {
+        fgHandle.store(NULL, std::memory_order_release);
+    }
+
+    std::string getEnvVar(const char* name) {
+        DWORD size = GetEnvironmentVariableA(name, nullptr, 0);
+        if (size == 0) return std::string();
+        std::string value(size, '\0');
+        DWORD written = GetEnvironmentVariableA(name, &value[0], size);
+        if (written == 0) return std::string();
+        if (!value.empty() && value.back() == '\0') {
+            value.pop_back();
+        }
+        return value;
+    }
+
+    bool setEnvVar(const char* name, const std::string& value) {
+        return SetEnvironmentVariableA(name, value.c_str()) != 0;
+    }
+
+    bool pathContains(const std::string& pathList, const std::string& entry) {
+        if (entry.empty()) return false;
+        size_t start = 0;
+        while (start <= pathList.size()) {
+            size_t end = pathList.find(';', start);
+            if (end == std::string::npos) end = pathList.size();
+            if (pathList.substr(start, end - start) == entry) {
+                return true;
+            }
+            if (end == pathList.size()) break;
+            start = end + 1;
+        }
+        return false;
+    }
 }
 
 namespace ProcessManager {
@@ -152,8 +195,10 @@ namespace ProcessManager {
                 // LƯU CẢ hProcess VÀ hThread
                 bgProcesses.push_back({ pi.dwProcessId, pi.hProcess, pi.hThread, args[0], "Running" });
             } else {
+                setForegroundProcess(pi.hProcess, pi.dwProcessId);
                 // Foreground: Đợi và dọn dẹp ngay
                 WaitForSingleObject(pi.hProcess, INFINITE);
+                clearForegroundProcess();
                 CloseHandle(pi.hProcess);
                 CloseHandle(pi.hThread);
             }
@@ -232,6 +277,16 @@ namespace ProcessManager {
         std::cout << "[System] Cleanup complete." << std::endl;
     }
 
+    bool terminateForeground() {
+        HANDLE handle = fgHandle.load(std::memory_order_acquire);
+        if (handle == NULL) {
+            return false;
+        }
+
+        TerminateProcess(handle, 0);
+        return true;
+    }
+
     // --- Trợ giúp ---
     void help() {
         std::cout << "\nWELCOME TO MY SHELL\n";
@@ -242,6 +297,8 @@ namespace ProcessManager {
         std::cout << "stop    : Suspend a process (stop <PID>)\n";
         std::cout << "resume  : Resume a process (resume <PID>)\n";
         std::cout << "date/time: Show current system date and time\n";
+        std::cout << "path    : Show or set PATH (path [value])\n";
+        std::cout << "addpath : Append a folder to PATH (addpath <value>)\n";
         std::cout << "exit    : Exit my shell\n";
     }
 
@@ -263,4 +320,26 @@ namespace ProcessManager {
         }
     }
 
+    void showPath() {
+        std::string path = getEnvVar("PATH");
+        std::cout << "PATH=" << path << std::endl;
+    }
+
+    bool setPath(const std::string& value) {
+        return setEnvVar("PATH", value);
+    }
+
+    bool addPath(const std::string& value) {
+        if (value.empty()) return false;
+        std::string current = getEnvVar("PATH");
+        if (pathContains(current, value)) {
+            return true;
+        }
+        std::string updated = current;
+        if (!updated.empty() && updated.back() != ';') {
+            updated += ';';
+        }
+        updated += value;
+        return setEnvVar("PATH", updated);
+    }
 }

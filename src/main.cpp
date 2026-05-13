@@ -7,7 +7,7 @@
 // Giúp Shell không bị tắt đột ngột khi nhấn Ctrl+C
 BOOL WINAPI ConsoleHandler(DWORD dwType) {
     if (dwType == CTRL_C_EVENT) {
-        ProcessManager::cleanup(); // Gọi hàm dọn dẹp tiến trình ngầm trước khi thoát
+        ProcessManager::terminateForeground();
         return TRUE; // Trả về TRUE để báo Windows là mình đã xử lý, đừng tắt Shell
     }
     return FALSE;
@@ -50,5 +50,5 @@ int main() {
     std::cout << "Shell exited. Goodbye!" << std::endl;
     return 0;
 }
-//Build: cd d:\OS\MyShell_IT3070_2025.2; & "C:\msys64\ucrt64\bin\g++.exe" -std=c++17 -Wall -Wextra -pedantic -Iinclude src\main.cpp src\shell.cpp src\process_manager.cpp -o myShell.exe
-//Chạy terminal: cd /d d:\OS\MyShell_IT3070_2025.2 && myShell.exe
+//Build:g++ -std=c++11 -o bin\myShell.exe src\main.cpp src\shell.cpp src\process_manager.cpp src\builtins.cpp -I include
+//Chạy terminal:.\bin\myShell.exe

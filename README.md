@@ -25,12 +25,12 @@ myShell/
 ├── src/                # Mã nguồn chính (.cpp)
 │   ├── main.cpp        # Điểm khởi đầu (REPL Loop)
 │   ├── shell.cpp       # Logic xử lý phân tích lệnh (Parsing)
-│   ├── process_mgr.cpp # Quản lý danh sách tiến trình con
+│   ├── process_manager.cpp # Quản lý danh sách tiến trình con
 │   └── builtins.cpp    # Cài đặt các lệnh nội trú (dir, date, time...)
 ├── include/            # Các file tiêu đề (.h)
 │   ├── shell.h
-│   ├── process_mgr.h
-│   └── constants.h
+│   ├── process_manager.h
+│   └── common.h        # constants.h (tên dùng trong mã nguồn)
 ├── examples/           # Các file kịch bản mẫu
 │   └── test.bat        # File chạy thử nghiệm lệnh hàng loạt
 ├── bin/                # Chứa file thực thi sau khi biên dịch (.exe)
@@ -43,3 +43,4 @@ myShell/
 - [ ] Built-in Commands & Environment Management: Biến môi trường & Lệnh nội trú
 - [ ] Signal Handling: Xử lý tín hiệu
 - [ ] Batch Script Execution: Thực thi Batch File
+
