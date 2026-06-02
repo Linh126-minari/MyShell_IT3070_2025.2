@@ -291,15 +291,16 @@ namespace ProcessManager {
     void help() {
         std::cout << "\nWELCOME TO MY SHELL\n";
         std::cout << "myShell supports the following commands:\n";
-        std::cout << "dir     : List the contents of the current directory\n";
-        std::cout << "list    : List all background processes\n";
-        std::cout << "kill    : Terminate a process (kill <PID>)\n";
-        std::cout << "stop    : Suspend a process (stop <PID>)\n";
-        std::cout << "resume  : Resume a process (resume <PID>)\n";
-        std::cout << "date/time: Show current system date and time\n";
-        std::cout << "path    : Show or set PATH (path [value])\n";
-        std::cout << "addpath : Append a folder to PATH (addpath <value>)\n";
-        std::cout << "exit    : Exit my shell\n";
+        std::cout << "msh-help    : Show this help message\n";
+        std::cout << "msh-dir     : List the contents of the current directory\n";
+        std::cout << "msh-list    : List all background processes\n";
+        std::cout << "msh-kill    : Terminate a process (msh-kill <PID>)\n";
+        std::cout << "msh-stop    : Suspend a process (msh-stop <PID>)\n";
+        std::cout << "msh-resume  : Resume a process (msh-resume <PID>)\n";
+        std::cout << "msh-date/msh-time: Show current system date and time\n";
+        std::cout << "msh-path    : Show or set PATH (msh-path [value])\n";
+        std::cout << "msh-addpath : Append a folder to PATH (msh-addpath <value>)\n";
+        std::cout << "msh-exit    : Exit my shell\n";
     }
 
     // --- Hiển thị ngày giờ ---

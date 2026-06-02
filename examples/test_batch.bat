@@ -2,15 +2,15 @@
 rem Sample batch test for myShell (native runner)
 echo ==== myShell batch test ====
 echo Current PATH:
-path
+msh-path
 echo List include folder:
-dir include
+msh-dir include
 echo Current date/time:
-date
-time
+msh-date
+msh-time
 echo Builtin help:
-help
-echo Background test (dir &):
-dir include &
+msh-help
+echo Background test (msh-dir &):
+msh-dir include &
 echo Done.
 

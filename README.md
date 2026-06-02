@@ -26,7 +26,7 @@ myShell/
 │   ├── main.cpp        # Điểm khởi đầu (REPL Loop)
 │   ├── shell.cpp       # Logic xử lý phân tích lệnh (Parsing)
 │   ├── process_manager.cpp # Quản lý danh sách tiến trình con
-│   └── builtins.cpp    # Cài đặt các lệnh nội trú (dir, date, time...)
+│   └── builtins.cpp    # Cài đặt các lệnh nội trú (msh-dir, msh-date, msh-time...)
 ├── include/            # Các file tiêu đề (.h)
 │   ├── shell.h
 │   ├── process_manager.h

@@ -36,7 +36,7 @@ int main() {
         // Xóa khoảng trắng thừa ở đầu/cuối (nếu có hàm trim)
         // command = trim(command);
 
-        if (command == "exit") {
+        if (command == "msh-exit") {
             // 4. Trước khi thoát, phải dọn dẹp tiến trình con (Kill all background processes)
             ProcessManager::cleanup(); 
             break;

@@ -3,8 +3,8 @@ REM Test CTRL+C signal handling
 REM Mục đích: Kiểm tra tính năng ngắt tiến trình foreground từ bàn phím
 
 REM Test 1: Quick command (foreground)
-echo === Test 1: Quick foreground - dir command ===
-dir bin
+echo === Test 1: Quick foreground - msh-dir command ===
+msh-dir bin
 
 REM Test 2: Lặp vô hạn để test CTRL+C (foreground)
 REM Note: Nhấn CTRL+C khi chạy để kiểm tra tính năng ngắt tiến trình

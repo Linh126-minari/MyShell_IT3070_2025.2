@@ -1,18 +1,18 @@
 @echo off
 REM Test comprehensive shell features
-REM Include: foreground command, background process, list, kill, stop, resume
+REM Include: foreground command, background process, msh-list, msh-kill, msh-stop, msh-resume
 
 echo === Test 1: Show help ===
-help
+msh-help
 
 echo.
 echo === Test 2: Show date and time ===
-date
-time
+msh-date
+msh-time
 
 echo.
-echo === Test 3: List directory ===
-dir bin
+echo === Test 3: List directory (msh-dir) ===
+msh-dir bin
 
 echo.
 echo === Test 4: Background process - Notepad ===
@@ -21,11 +21,11 @@ notepad &
 
 echo.
 echo === Test 5: List all background processes ===
-list
+msh-list
 
 echo.
-echo === Test 6: Demo foreground dir command ===
-dir include
+echo === Test 6: Demo foreground msh-dir command ===
+msh-dir include
 
 echo.
 echo === Test: Signal handling ===

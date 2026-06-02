@@ -106,30 +106,30 @@ namespace {
             return;
         }
 
-        if (cmd == "list") {
+        if (cmd == "msh-list") {
             ProcessManager::list();
-        } else if (cmd == "kill" && args.size() > 1) {
+        } else if (cmd == "msh-kill" && args.size() > 1) {
             DWORD pid;
             if (!tryParsePid(args[1], pid)) {
                 std::cout << "Error: Invalid PID.\n";
             } else if (!ProcessManager::kill(pid)) {
                 std::cout << "Error: PID not found.\n";
             }
-        } else if (cmd == "stop" && args.size() > 1) {
+        } else if (cmd == "msh-stop" && args.size() > 1) {
             DWORD pid;
             if (!tryParsePid(args[1], pid)) {
                 std::cout << "Error: Invalid PID.\n";
             } else if (!ProcessManager::stop(pid)) {
                 std::cout << "Error: Cannot stop process.\n";
             }
-        } else if (cmd == "resume" && args.size() > 1) {
+        } else if (cmd == "msh-resume" && args.size() > 1) {
             DWORD pid;
             if (!tryParsePid(args[1], pid)) {
                 std::cout << "Error: Invalid PID.\n";
             } else if (!ProcessManager::resume(pid)) {
                 std::cout << "Error: Cannot resume process.\n";
             }
-        } else if ((cmd == "kill" || cmd == "stop" || cmd == "resume") && args.size() <= 1) {
+        } else if ((cmd == "msh-kill" || cmd == "msh-stop" || cmd == "msh-resume") && args.size() <= 1) {
             std::cout << "Usage: " << cmd << " <PID>\n";
         } else if (cmd == "exit" && fromBatch) {
             return;

@@ -74,22 +74,22 @@ namespace Builtins {
 
 		const std::string& cmd = args[0];
 
-		if (cmd == "help") {
+		if (cmd == "msh-help") {
 			ProcessManager::help();
 			return true;
 		}
 
-		if (cmd == "date") {
+		if (cmd == "msh-date") {
 			ProcessManager::showDateTime(true);
 			return true;
 		}
 
-		if (cmd == "time") {
+		if (cmd == "msh-time") {
 			ProcessManager::showDateTime(false);
 			return true;
 		}
 
-		if (cmd == "path") {
+		if (cmd == "msh-path") {
 			if (args.size() == 1) {
 				ProcessManager::showPath();
 			} else {
@@ -101,9 +101,9 @@ namespace Builtins {
 			return true;
 		}
 
-		if (cmd == "addpath") {
+		if (cmd == "msh-addpath") {
 			if (args.size() <= 1) {
-				std::cout << "Usage: addpath <value>\n";
+				std::cout << "Usage: msh-addpath <value>\n";
 			} else {
 				std::string value = joinArgs(args, 1);
 				if (!ProcessManager::addPath(value)) {
@@ -113,7 +113,7 @@ namespace Builtins {
 			return true;
 		}
 
-		if (cmd == "dir") {
+		if (cmd == "msh-dir") {
 			const std::string dirPath = (args.size() > 1) ? joinArgs(args, 1) : ".";
 			const std::wstring widePath = toWideFromConsole(dirPath);
 			(void)isBackground;
