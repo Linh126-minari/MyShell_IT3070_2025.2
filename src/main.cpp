@@ -3,10 +3,13 @@
 #include <windows.h> // Bắt buộc để dùng Windows API
 #include "shell.h"   // Giả định bạn đặt các hàm xử lý trong file này
 
+extern volatile bool g_batchInterrupted;
+
 // 1. Hàm xử lý tín hiệu (Handler Routine)
 // Giúp Shell không bị tắt đột ngột khi nhấn Ctrl+C
 BOOL WINAPI ConsoleHandler(DWORD dwType) {
     if (dwType == CTRL_C_EVENT) {
+        g_batchInterrupted = true;
         ProcessManager::terminateForeground();
         return TRUE; // Trả về TRUE để báo Windows là mình đã xử lý, đừng tắt Shell
     }

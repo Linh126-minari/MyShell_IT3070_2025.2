@@ -173,6 +173,24 @@ namespace {
 namespace ProcessManager {
     std::vector<ProcessInfo> bgProcesses;
 
+    // --- Dọn dẹp tiến trình kết thúc ---
+    void reapBackgroundProcesses() {
+        for (auto it = bgProcesses.begin(); it != bgProcesses.end(); ) {
+            DWORD exitCode = 0;
+            if (GetExitCodeProcess(it->hProcess, &exitCode)) {
+                if (exitCode != STILL_ACTIVE) {
+                    CloseHandle(it->hProcess);
+                    if (it->hThread != NULL) {
+                        CloseHandle(it->hThread);
+                    }
+                    it = bgProcesses.erase(it);
+                    continue;
+                }
+            }
+            ++it;
+        }
+    }
+
     // --- Tạo tiến trình ---
     void launch(const std::vector<std::string>& args, bool isBackground) {
         if (args.empty()) {
@@ -180,8 +198,16 @@ namespace ProcessManager {
             return;
         }
 
+        reapBackgroundProcesses();
+
         std::string cmdLine = "";
-        for (const auto& arg : args) cmdLine += arg + " ";
+        for (const auto& arg : args) {
+            if (arg.find(' ') != std::string::npos) {
+                cmdLine += "\"" + arg + "\" ";
+            } else {
+                cmdLine += arg + " ";
+            }
+        }
 
         STARTUPINFOA si;
         ZeroMemory(&si, sizeof(si));
@@ -189,7 +215,9 @@ namespace ProcessManager {
         PROCESS_INFORMATION pi;
         ZeroMemory(&pi, sizeof(pi));
 
-        if (CreateProcessA(NULL, &cmdLine[0], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi)) {
+        DWORD flags = isBackground ? CREATE_NEW_CONSOLE : 0;
+
+        if (CreateProcessA(NULL, &cmdLine[0], NULL, NULL, FALSE, flags, NULL, NULL, &si, &pi)) {
             if (isBackground) {
                 std::cout << "[Background] Started PID: " << pi.dwProcessId << std::endl;
                 // LƯU CẢ hProcess VÀ hThread
@@ -209,6 +237,7 @@ namespace ProcessManager {
 
     // --- Dừng tiến trình (Kill) ---
     bool kill(DWORD pid) {
+        reapBackgroundProcesses();
         for (auto it = bgProcesses.begin(); it != bgProcesses.end(); ++it) {
             if (it->pid == pid) {
                 TerminateProcess(it->hProcess, 0);
@@ -223,6 +252,7 @@ namespace ProcessManager {
 
     // --- Tạm dừng (Stop) ---
     bool stop(DWORD pid) {
+        reapBackgroundProcesses();
         for (auto& p : bgProcesses) {
             if (p.pid == pid) {
                 if (p.status == "Stopped") return true;
@@ -238,6 +268,7 @@ namespace ProcessManager {
 
     // --- Tiếp tục (Resume) ---
     bool resume(DWORD pid) {
+        reapBackgroundProcesses();
         for (auto& p : bgProcesses) {
             if (p.pid == pid) {
                 if (p.status == "Running") return true;
@@ -300,6 +331,10 @@ namespace ProcessManager {
         std::cout << "msh-date/msh-time: Show current system date and time\n";
         std::cout << "msh-path    : Show or set PATH (msh-path [value])\n";
         std::cout << "msh-addpath : Append a folder to PATH (msh-addpath <value>)\n";
+        std::cout << "msh-delpath : Delete a folder from PATH (msh-delpath <value>)\n";
+        std::cout << "msh-echo    : Display a message (msh-echo [message])\n";
+        std::cout << "msh-cd      : Change the current directory (msh-cd [path])\n";
+        std::cout << "msh-clear   : Clear the console screen\n";
         std::cout << "msh-exit    : Exit my shell\n";
     }
 
@@ -314,6 +349,7 @@ namespace ProcessManager {
     }
     // --- Liệt kê ---
     void list() {
+        reapBackgroundProcesses();
         std::cout << std::left << std::setw(10) << "PID" << std::setw(20) << "Command" << "Status" << std::endl;
         std::cout << "----------------------------------------------" << std::endl;
         for (auto& p : bgProcesses) {
@@ -342,5 +378,76 @@ namespace ProcessManager {
         }
         updated += value;
         return setEnvVar("PATH", updated);
+    }
+
+    bool delPath(const std::string& value) {
+        if (value.empty()) return false;
+        std::string current = getEnvVar("PATH");
+        std::string updated = "";
+        size_t start = 0;
+        bool found = false;
+
+        auto pathsEqual = [](std::string a, std::string b) {
+            while (!a.empty() && (a.back() == '/' || a.back() == '\\')) a.pop_back();
+            while (!b.empty() && (b.back() == '/' || b.back() == '\\')) b.pop_back();
+            if (a.size() != b.size()) return false;
+            for (size_t i = 0; i < a.size(); ++i) {
+                char ca = a[i];
+                char cb = b[i];
+                if (ca == '\\') ca = '/';
+                if (cb == '\\') cb = '/';
+                if (std::tolower(static_cast<unsigned char>(ca)) != std::tolower(static_cast<unsigned char>(cb))) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        while (start <= current.size()) {
+            size_t end = current.find(';', start);
+            if (end == std::string::npos) end = current.size();
+            std::string entry = current.substr(start, end - start);
+            if (pathsEqual(entry, value)) {
+                found = true;
+            } else {
+                if (!entry.empty()) {
+                    if (!updated.empty()) updated += ';';
+                    updated += entry;
+                }
+            }
+            if (end == current.size()) break;
+            start = end + 1;
+        }
+        if (!found) return false;
+        return setEnvVar("PATH", updated);
+    }
+
+    bool changeDirectory(const std::string& path) {
+        if (path.empty()) {
+            char buffer[MAX_PATH];
+            if (GetCurrentDirectoryA(MAX_PATH, buffer)) {
+                std::cout << buffer << std::endl;
+                return true;
+            }
+            return false;
+        }
+        if (!SetCurrentDirectoryA(path.c_str())) {
+            std::cout << "Error: The system cannot find the path specified: " << path << std::endl;
+            return false;
+        }
+        return true;
+    }
+
+    void clearScreen() {
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+            COORD coordScreen = { 0, 0 };
+            DWORD cCharsWritten;
+            DWORD dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+            FillConsoleOutputCharacterA(hConsole, (TCHAR)' ', dwConSize, coordScreen, &cCharsWritten);
+            FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
+            SetConsoleCursorPosition(hConsole, coordScreen);
+        }
     }
 }

@@ -113,6 +113,40 @@ namespace Builtins {
 			return true;
 		}
 
+		if (cmd == "msh-delpath") {
+			if (args.size() <= 1) {
+				std::cout << "Usage: msh-delpath <value>\n";
+			} else {
+				std::string value = joinArgs(args, 1);
+				if (!ProcessManager::delPath(value)) {
+					std::cout << "Error: Could not delete from PATH.\n";
+				}
+			}
+			return true;
+		}
+
+		if (cmd == "msh-echo") {
+			std::string value = joinArgs(args, 1);
+			std::cout << value << "\n";
+			return true;
+		}
+
+		if (cmd == "msh-echo.") {
+			std::cout << "\n";
+			return true;
+		}
+
+		if (cmd == "msh-cd") {
+			std::string value = (args.size() > 1) ? joinArgs(args, 1) : "";
+			ProcessManager::changeDirectory(value);
+			return true;
+		}
+
+		if (cmd == "msh-clear") {
+			ProcessManager::clearScreen();
+			return true;
+		}
+
 		if (cmd == "msh-dir") {
 			const std::string dirPath = (args.size() > 1) ? joinArgs(args, 1) : ".";
 			const std::wstring widePath = toWideFromConsole(dirPath);

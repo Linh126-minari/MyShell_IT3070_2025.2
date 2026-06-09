@@ -11,6 +11,8 @@
 #include "shell.h"
 #include "builtins.h"
 
+volatile bool g_batchInterrupted = false;
+
 namespace {
     bool tryParsePid(const std::string& text, DWORD& pid) {
         try {
@@ -67,9 +69,24 @@ namespace {
 
     std::vector<std::string> tokenize(const std::string& input) {
         std::vector<std::string> tokens;
-        std::stringstream ss(input);
-        std::string temp;
-        while (ss >> temp) tokens.push_back(temp);
+        std::string current;
+        bool inQuotes = false;
+        for (size_t i = 0; i < input.size(); ++i) {
+            char c = input[i];
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (std::isspace(static_cast<unsigned char>(c)) && !inQuotes) {
+                if (!current.empty()) {
+                    tokens.push_back(current);
+                    current.clear();
+                }
+            } else {
+                current.push_back(c);
+            }
+        }
+        if (!current.empty()) {
+            tokens.push_back(current);
+        }
         return tokens;
     }
 
@@ -139,6 +156,7 @@ namespace {
     }
 
     bool executeBatchFile(const std::string& path) {
+        g_batchInterrupted = false;
         std::ifstream file(path.c_str());
         if (!file.is_open()) {
             std::cout << "Error: Cannot open batch file: " << path << "\n";
@@ -169,6 +187,11 @@ namespace {
 
         // Second pass: execute lines
         for (size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
+            if (g_batchInterrupted) {
+                std::cout << "\nBatch execution interrupted by user.\n";
+                break;
+            }
+
             line = lines[lineIndex];
 
             bool suppressEcho = false;
@@ -201,10 +224,25 @@ namespace {
                 continue;
             }
 
-            if (startsWithIgnoreCase(trimmed, "echo ")) {
+            // Check for echo command
+            bool isEchoCmd = false;
+            std::string echoText;
+            if (toLower(trimmed) == "echo") {
+                isEchoCmd = true;
+                echoText = echoEnabled ? "ECHO is on." : "ECHO is off.";
+            } else if (toLower(trimmed) == "echo." || startsWithIgnoreCase(trimmed, "echo. ")) {
+                isEchoCmd = true;
+                echoText = "";
+            } else if (startsWithIgnoreCase(trimmed, "echo ")) {
+                isEchoCmd = true;
+                echoText = trimmed.substr(5);
+            }
+
+            if (isEchoCmd) {
                 if (echoEnabled && !suppressEcho) {
-                    std::cout << trimmed.substr(5) << "\n";
+                    std::cout << trimmed << "\n";
                 }
+                std::cout << echoText << "\n";
                 continue;
             }
 

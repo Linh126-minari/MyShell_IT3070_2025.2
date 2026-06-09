@@ -11,6 +11,7 @@ namespace ProcessManager {
     extern std::vector<ProcessInfo> bgProcesses;
 
     // Các hàm thực thi chính
+    void reapBackgroundProcesses();
     void launch(const std::vector<std::string>& args, bool isBackground);
     bool kill(DWORD pid);
     bool stop(DWORD pid);
@@ -18,11 +19,14 @@ namespace ProcessManager {
     void help();
     void showDateTime(bool isDate);
     void list();
-    void cleanup(); // Gọi khi thoát Shell
+    void cleanup(); 
     bool terminateForeground();
     void showPath();
     bool setPath(const std::string& value);
     bool addPath(const std::string& value);
+    bool delPath(const std::string& value);
+    bool changeDirectory(const std::string& path);
+    void clearScreen();
 }
 
 #endif
