@@ -14,6 +14,7 @@ namespace ProcessManager {
     void reapBackgroundProcesses();
     void launch(const std::vector<std::string>& args, bool isBackground);
     bool kill(DWORD pid);
+    void killAll();
     bool stop(DWORD pid);
     bool resume(DWORD pid);
     void help();

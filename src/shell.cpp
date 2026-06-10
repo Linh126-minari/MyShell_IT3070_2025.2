@@ -49,6 +49,19 @@ namespace {
         return rtrim(ltrim(text));
     }
 
+    std::vector<std::string> splitByComma(const std::string& str) {
+        std::vector<std::string> result;
+        std::stringstream ss(str);
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+            std::string trimmed = trim(token);
+            if (!trimmed.empty()) {
+                result.push_back(trimmed);
+            }
+        }
+        return result;
+    }
+
     std::string toLower(std::string value) {
         std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
             return static_cast<char>(std::tolower(c));
@@ -125,12 +138,25 @@ namespace {
 
         if (cmd == "msh-list") {
             ProcessManager::list();
+        } else if (cmd == "msh-killall") {
+            ProcessManager::killAll();
         } else if (cmd == "msh-kill" && args.size() > 1) {
-            DWORD pid;
-            if (!tryParsePid(args[1], pid)) {
-                std::cout << "Error: Invalid PID.\n";
-            } else if (!ProcessManager::kill(pid)) {
-                std::cout << "Error: PID not found.\n";
+            std::vector<std::string> pidStrings;
+            for (size_t i = 1; i < args.size(); ++i) {
+                auto splitParts = splitByComma(args[i]);
+                pidStrings.insert(pidStrings.end(), splitParts.begin(), splitParts.end());
+            }
+            if (pidStrings.empty()) {
+                std::cout << "Usage: msh-kill <PID1> [PID2] ...\n";
+            } else {
+                for (const auto& pidStr : pidStrings) {
+                    DWORD pid;
+                    if (!tryParsePid(pidStr, pid)) {
+                        std::cout << "Error: Invalid PID: " << pidStr << ".\n";
+                    } else if (!ProcessManager::kill(pid)) {
+                        std::cout << "Error: PID " << pid << " not found.\n";
+                    }
+                }
             }
         } else if (cmd == "msh-stop" && args.size() > 1) {
             DWORD pid;
@@ -147,7 +173,11 @@ namespace {
                 std::cout << "Error: Cannot resume process.\n";
             }
         } else if ((cmd == "msh-kill" || cmd == "msh-stop" || cmd == "msh-resume") && args.size() <= 1) {
-            std::cout << "Usage: " << cmd << " <PID>\n";
+            if (cmd == "msh-kill") {
+                std::cout << "Usage: msh-kill <PID1> [PID2] ...\n";
+            } else {
+                std::cout << "Usage: " << cmd << " <PID>\n";
+            }
         } else if (cmd == "exit" && fromBatch) {
             return;
         } else {

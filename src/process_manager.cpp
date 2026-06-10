@@ -176,6 +176,10 @@ namespace ProcessManager {
     // --- Dọn dẹp tiến trình kết thúc ---
     void reapBackgroundProcesses() {
         for (auto it = bgProcesses.begin(); it != bgProcesses.end(); ) {
+            if (it->status == "Terminated") {
+                ++it;
+                continue;
+            }
             DWORD exitCode = 0;
             if (GetExitCodeProcess(it->hProcess, &exitCode)) {
                 if (exitCode != STILL_ACTIVE) {
@@ -238,16 +242,33 @@ namespace ProcessManager {
     // --- Dừng tiến trình (Kill) ---
     bool kill(DWORD pid) {
         reapBackgroundProcesses();
-        for (auto it = bgProcesses.begin(); it != bgProcesses.end(); ++it) {
-            if (it->pid == pid) {
-                TerminateProcess(it->hProcess, 0);
-                CloseHandle(it->hProcess);
-                CloseHandle(it->hThread);
-                bgProcesses.erase(it);
+        for (auto& p : bgProcesses) {
+            if (p.pid == pid) {
+                if (p.status != "Terminated") {
+                    TerminateProcess(p.hProcess, 0);
+                    p.status = "Terminated";
+                }
                 return true;
             }
         }
         return false;
+    }
+
+    void killAll() {
+        reapBackgroundProcesses();
+        bool killedAny = false;
+        for (auto& p : bgProcesses) {
+            if (p.status != "Terminated") {
+                TerminateProcess(p.hProcess, 0);
+                p.status = "Terminated";
+                killedAny = true;
+            }
+        }
+        if (killedAny) {
+            std::cout << "All running background processes have been terminated.\n";
+        } else {
+            std::cout << "No running background processes to terminate.\n";
+        }
     }
 
     // --- Tạm dừng (Stop) ---
@@ -286,12 +307,23 @@ namespace ProcessManager {
     void cleanup() {
         if (bgProcesses.empty()) return;
 
-        std::cout << "\n[System] Sending kill signal to " << bgProcesses.size() 
-                  << " background process(es)..." << std::endl;
+        int activeCount = 0;
+        for (const auto& p : bgProcesses) {
+            if (p.status != "Terminated") {
+                activeCount++;
+            }
+        }
+
+        if (activeCount > 0) {
+            std::cout << "\n[System] Sending kill signal to " << activeCount 
+                      << " background process(es)..." << std::endl;
+        }
 
         for (auto& p : bgProcesses) {
-            // 1. Ép buộc dừng tiến trình
-            TerminateProcess(p.hProcess, 0);
+            if (p.status != "Terminated") {
+                // 1. Ép buộc dừng tiến trình
+                TerminateProcess(p.hProcess, 0);
+            }
 
             // 2. Đóng Handle tiến trình (Giải phóng bộ nhớ hệ thống)
             CloseHandle(p.hProcess);
@@ -305,7 +337,9 @@ namespace ProcessManager {
         // 4. Xóa sạch danh sách trong bộ nhớ RAM của Shell
         bgProcesses.clear();
         
-        std::cout << "[System] Cleanup complete." << std::endl;
+        if (activeCount > 0) {
+            std::cout << "[System] Cleanup complete." << std::endl;
+        }
     }
 
     bool terminateForeground() {
@@ -325,7 +359,8 @@ namespace ProcessManager {
         std::cout << "msh-help    : Show this help message\n";
         std::cout << "msh-dir     : List the contents of the current directory\n";
         std::cout << "msh-list    : List all background processes\n";
-        std::cout << "msh-kill    : Terminate a process (msh-kill <PID>)\n";
+        std::cout << "msh-kill    : Terminate processes (msh-kill <PID1> [PID2] ...)\n";
+        std::cout << "msh-killall : Terminate all running background processes\n";
         std::cout << "msh-stop    : Suspend a process (msh-stop <PID>)\n";
         std::cout << "msh-resume  : Resume a process (msh-resume <PID>)\n";
         std::cout << "msh-date/msh-time: Show current system date and time\n";
@@ -354,6 +389,19 @@ namespace ProcessManager {
         std::cout << "----------------------------------------------" << std::endl;
         for (auto& p : bgProcesses) {
             std::cout << std::left << std::setw(10) << p.pid << std::setw(20) << p.command << p.status << std::endl;
+        }
+
+        // Clean up processes that were shown as Terminated so they won't show up in subsequent list commands
+        for (auto it = bgProcesses.begin(); it != bgProcesses.end(); ) {
+            if (it->status == "Terminated") {
+                CloseHandle(it->hProcess);
+                if (it->hThread != NULL) {
+                    CloseHandle(it->hThread);
+                }
+                it = bgProcesses.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 
